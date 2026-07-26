@@ -1,0 +1,79 @@
+@import "tailwindcss";
+
+/* ── Variables del sistema de diseño ─────────────────────────────────────── */
+:root {
+  --brand:        #6d28d9;
+  --brand-light:  #ede9fe;
+  --brand-mid:    #7c3aed;
+  --brand-dark:   #4c1d95;
+  --accent:       #4f46e5;
+  --accent-light: #e0e7ff;
+  --success:      #059669;
+  --warning:      #d97706;
+  --danger:       #dc2626;
+  --surface:      #ffffff;
+  --bg:           #f5f3ff;
+  --text-1:       #1e1b4b;
+  --text-2:       #4b5563;
+  --text-3:       #9ca3af;
+  --border:       #e5e7eb;
+  --radius:       0.875rem;
+}
+
+/* ── Base ─────────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+body {
+  background-color: var(--bg);
+  color: var(--text-2);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  min-height: 100dvh;
+}
+
+/* ── Scrollbar ────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar        { width: 6px; height: 6px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: #c4b5fd; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #a78bfa; }
+
+/* ── Animaciones ──────────────────────────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+@keyframes float-up {
+  0%   { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse-brand {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(124 58 237 / .4); }
+  50%       { box-shadow: 0 0 0 8px rgb(124 58 237 / 0); }
+}
+@keyframes bounce-up {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-5px); }
+}
+
+/* ── Utilidades propias ───────────────────────────────────────────────────── */
+.progress-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--brand-mid) 0%,
+    #a78bfa 45%,
+    var(--accent)    60%,
+    var(--brand-mid) 100%
+  );
+  background-size: 200% auto;
+  animation: shimmer 1.8s linear infinite;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 1px 3px rgb(0 0 0 / .05), 0 1px 2px -1px rgb(0 0 0 / .04);
+}
+
+.animate-float-up { animation: float-up .3s ease both; }
+.animate-bounce-icon { animation: bounce-up 1.8s ease-in-out infinite; }
+.animate-pulse-brand { animation: pulse-brand 2s ease-in-out infinite; }
