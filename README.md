@@ -3,7 +3,7 @@
 Interfaz web para subir videos, seguir el progreso de la transcripción y
 consultar transcripciones, análisis y mapas mentales.
 
-Backend correspondiente: [video-to-text-backend](https://github.com/TU_USUARIO/video-to-text-backend)
+Backend correspondiente: [video-to-text-backend](https://github.com/Emaldonador/video-to-text-backend)
 
 ## Stack
 
@@ -40,7 +40,7 @@ src/
 brew install node
 
 # Clonar
-git clone https://github.com/TU_USUARIO/video-to-text-frontend.git
+git clone https://github.com/Emaldonador/video-to-text-frontend.git
 cd video-to-text-frontend
 
 # Dependencias
