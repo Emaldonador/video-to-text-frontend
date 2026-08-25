@@ -1,6 +1,6 @@
 # VideoATexto - Frontend launcher con log
 $logFile = Join-Path $PSScriptRoot "frontend_debug.log"
-$frontendPath = Join-Path $PSScriptRoot "videoatexto\frontend"
+$frontendPath = Split-Path $PSScriptRoot -Parent
 
 function Log($msg) {
     $ts = Get-Date -Format "HH:mm:ss"
