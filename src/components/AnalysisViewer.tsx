@@ -10,9 +10,9 @@
  */
 import { useState, useEffect, useRef, type ReactNode } from "react";
 import {
-  analyzeJob, getAnalysis, getAnalysisStatus, getDiagram, getHealth, documentUrl,
+  analyzeJob, getAnalysis, getAnalysisStatus, getDiagram, getHealth, documentUrl, analysisPdfUrl,
 } from "../api/client";
-import type { AnalysisResult, ContentSection, DiagramResult, HealthStatus } from "../api/client";
+import type { AnalysisResult, ContentSection, DiagramResult, DiagramType, HealthStatus } from "../api/client";
 import { DiagramViewer } from "./DiagramViewer";
 import type { Job } from "../types/job";
 
@@ -42,6 +42,7 @@ export function AnalysisViewer({ job }: { job: Job }) {
   const [error, setError]           = useState<string | null>(null);
   const [options, setOptions]       = useState<AnalysisOptions>({ diagram: false });
   const [loadingDiagram, setLoadingDiagram] = useState(false);
+  const [switchingDiagram, setSwitchingDiagram] = useState(false);
   const [health, setHealth]         = useState<HealthStatus | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -148,6 +149,18 @@ export function AnalysisViewer({ job }: { job: Job }) {
     }
   };
 
+  const handleDiagramTypeChange = async (type: DiagramType) => {
+    setSwitchingDiagram(true);
+    try {
+      const d = await getDiagram(job.id, type);
+      setDiagram(d);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSwitchingDiagram(false);
+    }
+  };
+
   // ── Estado: verificando ───────────────────────────────────────────────────
   if (viewState === "checking") {
     return (
@@ -239,7 +252,7 @@ export function AnalysisViewer({ job }: { job: Job }) {
             <div>
               <p className="text-sm font-medium text-slate-800">Diagrama visual</p>
               <p className="text-xs text-slate-500">
-                La app elige el mejor tipo según el video: mapa mental (clases), diagrama de flujo (reuniones) o grafo de conceptos (charlas).
+                La app elige el mejor tipo según el video (mapa mental, diagrama de flujo, grafo de conceptos o tabla) — después podés cambiarlo con un clic.
               </p>
             </div>
           </label>
@@ -321,6 +334,19 @@ export function AnalysisViewer({ job }: { job: Job }) {
             </svg>
             Descargar .docx
           </a>
+          <a
+            href={analysisPdfUrl(job.id, diagram?.diagram_type)}
+            download
+            className="flex items-center gap-1.5 rounded-lg border border-indigo-300 px-3 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-50"
+            title={diagram
+              ? `Incluye la vista "${diagram.title}" en formato ${diagram.diagram_type}`
+              : "Incluye la herramienta visual elegida automáticamente"}
+          >
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
+            </svg>
+            Descargar análisis (.pdf)
+          </a>
           <button
             onClick={handleAnalyze}
             className="text-xs text-indigo-500 underline hover:text-indigo-700"
@@ -396,7 +422,13 @@ export function AnalysisViewer({ job }: { job: Job }) {
       )}
 
       {/* Diagrama visual */}
-      {diagram && <DiagramViewer diagram={diagram} />}
+      {diagram && (
+        <DiagramViewer
+          diagram={diagram}
+          onTypeChange={handleDiagramTypeChange}
+          isSwitching={switchingDiagram}
+        />
+      )}
 
       {error && (
         <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>

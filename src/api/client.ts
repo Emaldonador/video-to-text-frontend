@@ -65,6 +65,11 @@ export function documentUrl(jobId: string): string {
   return `${API_BASE_URL}/api/jobs/${jobId}/document`;
 }
 
+export function analysisPdfUrl(jobId: string, diagramType?: DiagramType): string {
+  const url = `${API_BASE_URL}/api/jobs/${jobId}/analysis.pdf`;
+  return diagramType ? `${url}?tipo=${diagramType}` : url;
+}
+
 export async function cancelJob(jobId: string): Promise<void> {
   const res = await fetch(`${API_BASE_URL}/api/jobs/${jobId}/cancel`, { method: "POST" });
   if (!res.ok) throw new Error("No se pudo cancelar el trabajo.");
@@ -75,8 +80,9 @@ export async function deleteJob(jobId: string): Promise<void> {
   if (!res.ok) throw new Error("No se pudo eliminar el trabajo.");
 }
 
-export async function getDiagram(jobId: string): Promise<DiagramResult> {
-  const res = await fetch(`${API_BASE_URL}/api/jobs/${jobId}/diagram`);
+export async function getDiagram(jobId: string, diagramType?: DiagramType): Promise<DiagramResult> {
+  const url = `${API_BASE_URL}/api/jobs/${jobId}/diagram`;
+  const res = await fetch(diagramType ? `${url}?tipo=${diagramType}` : url);
   if (!res.ok) {
     let detail = res.statusText;
     try { detail = (await res.json()).detail ?? detail; } catch { /* sin cuerpo */ }
@@ -138,9 +144,18 @@ export interface ContentSection {
   items: string[];
 }
 
+export type DiagramType = "mindmap" | "flowchart" | "graph" | "table";
+
+export interface TableRow {
+  category: string;
+  label: string;
+  detail: string;
+}
+
 export interface DiagramResult {
-  diagram_type: string;   // "mindmap" | "flowchart" | "graph"
+  diagram_type: DiagramType;
   mermaid_code: string;
+  table_rows: TableRow[] | null;
   title: string;
   rationale: string;
 }

@@ -7,7 +7,7 @@
  */
 import { useEffect, useRef, useState } from "react";
 import mermaid from "mermaid";
-import type { DiagramResult } from "../api/client";
+import type { DiagramResult, DiagramType } from "../api/client";
 
 // Inicializar Mermaid una sola vez (idempotente)
 mermaid.initialize({
@@ -18,24 +18,34 @@ mermaid.initialize({
   flowchart: { useMaxWidth: true, htmlLabels: true },
 });
 
-const DIAGRAM_LABELS: Record<string, string> = {
+const DIAGRAM_LABELS: Record<DiagramType, string> = {
   mindmap:   "Mapa mental",
   flowchart: "Diagrama de flujo",
   graph:     "Grafo de conceptos",
+  table:     "Tabla",
 };
+
+const DIAGRAM_TYPES: DiagramType[] = ["mindmap", "flowchart", "graph", "table"];
 
 let _uid = 0;
 
 interface Props {
   diagram: DiagramResult;
+  onTypeChange?: (type: DiagramType) => void;
+  isSwitching?: boolean;
 }
 
-export function DiagramViewer({ diagram }: Props) {
+export function DiagramViewer({ diagram, onTypeChange, isSwitching }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [renderError, setRenderError] = useState<string | null>(null);
   const [isRendering, setIsRendering] = useState(true);
+  const isTable = diagram.diagram_type === "table";
 
   useEffect(() => {
+    if (isTable) {
+      setIsRendering(false);
+      return;
+    }
     if (!containerRef.current) return;
     setIsRendering(true);
     setRenderError(null);
@@ -61,7 +71,7 @@ export function DiagramViewer({ diagram }: Props) {
         setRenderError("No se pudo renderizar el diagrama.");
         setIsRendering(false);
       });
-  }, [diagram.mermaid_code]);
+  }, [diagram.mermaid_code, isTable]);
 
   const label = DIAGRAM_LABELS[diagram.diagram_type] ?? diagram.diagram_type;
 
@@ -80,22 +90,84 @@ export function DiagramViewer({ diagram }: Props) {
         </span>
       </div>
 
-      {/* Diagrama */}
+      {/* Selector de herramienta visual */}
+      {onTypeChange && (
+        <div className="flex flex-wrap gap-1.5 border-b border-violet-100 bg-white px-5 py-2.5">
+          {DIAGRAM_TYPES.map((type) => (
+            <button
+              key={type}
+              onClick={() => onTypeChange(type)}
+              disabled={isSwitching}
+              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                diagram.diagram_type === type
+                  ? "bg-violet-600 text-white"
+                  : "bg-violet-50 text-violet-600 hover:bg-violet-100"
+              }`}
+            >
+              {DIAGRAM_LABELS[type]}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Diagrama o tabla */}
       <div className="overflow-x-auto p-5">
-        {isRendering && (
-          <div className="flex items-center gap-2 text-sm text-slate-400">
+        {isSwitching && (
+          <div className="mb-3 flex items-center gap-2 text-sm text-slate-400">
             <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
             </svg>
-            Renderizando diagrama…
+            Cambiando de vista…
           </div>
         )}
-        {renderError && (
-          <p className="text-sm text-red-600">{renderError}</p>
+
+        {isTable ? (
+          <TableView rows={diagram.table_rows ?? []} />
+        ) : (
+          <>
+            {isRendering && (
+              <div className="flex items-center gap-2 text-sm text-slate-400">
+                <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                </svg>
+                Renderizando diagrama…
+              </div>
+            )}
+            {renderError && (
+              <p className="text-sm text-red-600">{renderError}</p>
+            )}
+            <div ref={containerRef} className={isRendering ? "hidden" : "w-full"} />
+          </>
         )}
-        <div ref={containerRef} className={isRendering ? "hidden" : "w-full"} />
       </div>
     </div>
+  );
+}
+
+function TableView({ rows }: { rows: DiagramResult["table_rows"] }) {
+  if (!rows || rows.length === 0) {
+    return <p className="text-sm text-slate-400">No hay suficiente contenido analizado para mostrar una tabla.</p>;
+  }
+  return (
+    <table className="w-full border-collapse text-sm">
+      <thead>
+        <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
+          <th className="py-2 pr-3 font-semibold">Categoría</th>
+          <th className="py-2 pr-3 font-semibold">Título</th>
+          <th className="py-2 font-semibold">Detalle</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((row, i) => (
+          <tr key={i} className="border-b border-slate-100 align-top">
+            <td className="py-2.5 pr-3 whitespace-nowrap text-xs font-medium text-violet-600">{row.category}</td>
+            <td className="py-2.5 pr-3 font-medium text-slate-800">{row.label}</td>
+            <td className="py-2.5 text-slate-600">{row.detail}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
